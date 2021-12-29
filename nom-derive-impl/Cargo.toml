@@ -23,6 +23,11 @@ include = [
   "tests/*.rs",
 ]
 
+[features]
+default = ["std"]
+std = ["alloc"]
+alloc = []
+
 [lib]
 proc-macro = true
 

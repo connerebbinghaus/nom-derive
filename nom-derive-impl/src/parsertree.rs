@@ -48,9 +48,12 @@ pub enum ParserExpr {
     CallParseLE(TypeItem),
     Complete(Box<ParserExpr>),
     Cond(Box<ParserExpr>, TokenStream),
+    #[cfg(feature = "alloc")]
     Count(Box<ParserExpr>, TokenStream),
+    #[cfg(feature = "std")]
     DbgDmp(Box<ParserExpr>, Ident),
     Into(Box<ParserExpr>),
+    #[cfg(feature = "alloc")]
     LengthCount(Box<ParserExpr>, TokenStream),
     Map(Box<ParserExpr>, TokenStream),
     Nop,
@@ -86,12 +89,14 @@ impl ParserExpr {
             }
             ParserExpr::Complete(expr)
             | ParserExpr::Cond(expr, _)
-            | ParserExpr::Count(expr, _)
-            | ParserExpr::DbgDmp(expr, _)
             | ParserExpr::Into(expr)
-            | ParserExpr::LengthCount(expr, _)
             | ParserExpr::Map(expr, _)
             | ParserExpr::Verify(expr, _, _) => expr.last_type(),
+            #[cfg(feature = "alloc")]
+            ParserExpr::Count(expr, _) 
+            | ParserExpr::LengthCount(expr, _) => expr.last_type(),
+            #[cfg(feature = "std")]
+            ParserExpr::DbgDmp(expr, _)=> expr.last_type(),
             _ => None,
         }
     }
@@ -115,9 +120,11 @@ impl ToTokens for ParserExpr {
             ParserExpr::Cond(expr, c) => {
                 quote! { nom::combinator::cond(#c, #expr) }
             }
+            #[cfg(feature = "alloc")]
             ParserExpr::Count(expr, n) => {
                 quote! { nom::multi::count(#expr, #n as usize) }
             }
+            #[cfg(feature = "std")]
             ParserExpr::DbgDmp(expr, i) => {
                 let ident = format!("{}", i);
                 quote! { nom::error::dbg_dmp(#expr, #ident) }
@@ -125,6 +132,7 @@ impl ToTokens for ParserExpr {
             ParserExpr::Into(expr) => {
                 quote! { nom::combinator::into(#expr) }
             }
+            #[cfg(feature = "alloc")]
             ParserExpr::LengthCount(expr, n) => {
                 quote! { nom::multi::length_count(#n, #expr) }
             }

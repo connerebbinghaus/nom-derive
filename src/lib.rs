@@ -106,6 +106,10 @@
 //!
 //! [nom]: https://github.com/geal/nom
 
+#![cfg_attr(not(std), no_std)]
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
 pub mod docs;
 mod helpers;
 mod traits;

@@ -28,9 +28,14 @@ include = [
 [workspace]
 members = ["nom-derive-impl"]
 
+[features]
+default = ["std"]
+std = ["nom/std", "nom-derive-impl/std", "alloc"]
+alloc = ["nom/alloc", "nom-derive-impl/alloc",]
+
 [dependencies]
-nom = { version = "7.0", default-features = false, features = ["std"] }
-nom-derive-impl = { version="=0.10.0", path="./nom-derive-impl" }
+nom = { version = "7.0", default-features = false}
+nom-derive-impl = { version="=0.10.0", path="./nom-derive-impl", default-features = false}
 rustversion = "1.0"
 
 [dev-dependencies]

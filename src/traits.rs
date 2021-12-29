@@ -1,14 +1,23 @@
-use nom::bytes::streaming::take;
-use nom::combinator::{complete, map_res, opt};
-use nom::error::{Error, FromExternalError, ParseError};
-use nom::multi::{many0, many_m_n};
+use nom::combinator::{complete, opt};
+use nom::error::{Error, ParseError};
+#[cfg(feature = "alloc")]
+use nom::{
+    bytes::streaming::take,
+    error::FromExternalError,
+    multi::{many0, many_m_n},
+    combinator::map_res,
+};
+#[cfg(feature = "alloc")]
+use core::convert::TryFrom;
 use nom::number::streaming::*;
 use nom::sequence::pair;
 use nom::*;
-use std::convert::TryFrom;
-use std::ops::RangeFrom;
+use core::ops::RangeFrom;
 
 pub use nom::{InputLength, Slice};
+
+#[cfg(feature = "alloc")]
+use alloc::{string::String, borrow::ToOwned, vec::Vec};
 
 pub trait InputSlice:
     Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength + InputTake
@@ -150,13 +159,14 @@ impl_primitive_type!(u128, be_u128, le_u128);
 impl_primitive_type!(f32, be_f32, le_f32);
 impl_primitive_type!(f64, be_f64, le_f64);
 
+#[cfg(feature = "alloc")]
 impl<'a, E> Parse<&'a [u8], E> for String
 where
-    E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], std::str::Utf8Error>,
+    E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], core::str::Utf8Error>,
 {
     fn parse(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
         let (rem, sz) = <u32>::parse(i)?;
-        let (rem, s) = map_res(take(sz as usize), std::str::from_utf8)(rem)?;
+        let (rem, s) = map_res(take(sz as usize), core::str::from_utf8)(rem)?;
         Ok((rem, s.to_owned()))
     }
 }
@@ -178,6 +188,7 @@ where
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<T, I, E> Parse<I, E> for Vec<T>
 where
     I: Clone + PartialEq + InputSlice,
@@ -215,6 +226,7 @@ where
 
 /// *Note: this implementation uses const generics and requires rust >= 1.51*
 #[rustversion::since(1.51)]
+#[cfg(feature = "alloc")]
 impl<T, I, E, const N: usize> Parse<I, E> for [T; N]
 where
     I: Clone + PartialEq + InputSlice,
@@ -236,9 +248,11 @@ where
     }
 }
 
+#[cfg(feature = "alloc")]
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::{vec, vec::Vec, string::String};
 
     #[test]
     fn test_parse_trait_vec() {

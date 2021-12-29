@@ -19,6 +19,7 @@ struct StructWithOptionOption {
 }
 
 /// A simple structure with a Vec type
+#[cfg(feature = "alloc")]
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithVec {
     pub a: u32,
@@ -62,6 +63,7 @@ fn test_struct_with_option_option() {
 }
 
 #[test]
+#[cfg(feature = "alloc")]
 fn test_struct_with_vec() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
     let res = StructWithVec::parse(input);

@@ -299,18 +299,21 @@
 /// For ex:
 /// ```rust
 /// # use nom_derive::*;
-/// #
+/// # #[cfg(feature = "alloc")]
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S {
 ///   a: Vec<u16>
 /// }
-///
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// let input = b"\x00\x00\x00\x01";
 /// let res = S::parse(input);
 /// assert_eq!(res, Ok((&input[4..],S{a:vec![0,1]})));
+/// # }
 /// ```
-///
+/// *Requires feature `alloc`, enabled by default*
+/// 
 /// ## Count
 ///
 /// The `Count(n)` attribute can be used to specify the number of items to parse.
@@ -322,7 +325,7 @@
 /// For ex:
 /// ```rust
 /// # use nom_derive::*;
-/// #
+/// # #[cfg(feature = "alloc")]
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S {
@@ -330,12 +333,15 @@
 ///   #[nom(Count="a")]
 ///   b: Vec<u16>
 /// }
-/// #
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// # let input = b"\x00\x01\x12\x34";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[4..],S{a:1, b:vec![0x1234]})));
+/// # }
 /// ```
-///
+/// *Requires feature `alloc`, enabled by default*
+/// 
 /// ## LengthCount
 ///
 /// The `LengthCount="parser"` attribute can be used to specify a parser to get a number, and
@@ -349,19 +355,22 @@
 /// ```rust
 /// # use nom_derive::*;
 /// # use nom::number::streaming::be_u16;
-/// #
+/// # #[cfg(feature = "alloc")]
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S {
 ///   #[nom(LengthCount="be_u16")]
 ///   b: Vec<u16>
 /// }
-/// #
+/// # #[cfg(feature = "alloc")]
+/// # {
 /// # let input = b"\x00\x01\x12\x34";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[4..],S{b:vec![0x1234]})));
+/// # }
 /// ```
-///
+/// *Requires feature `alloc`, enabled by default*
+/// 
 /// ## Tag
 ///
 /// The `Tag(value)` attribute is used to parse a constant value (or "magic").
@@ -1179,7 +1188,7 @@
 ///
 /// ```rust
 /// # use nom_derive::*;
-/// #
+/// # #[cfg(feature = "std")]
 /// #[derive(Nom)]
 /// pub struct S {
 ///     pub a: u32,
@@ -1187,6 +1196,8 @@
 ///     pub b: u64,
 /// }
 /// ```
+/// 
+/// *Requires feature `std`, enabled by default*
 ///
 /// ## DebugDerive
 ///

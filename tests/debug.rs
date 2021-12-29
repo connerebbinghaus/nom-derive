@@ -1,3 +1,5 @@
+#![cfg(feature = "std")]
+
 use nom_derive::*;
 
 /// test for the `Debug` attribute (field)

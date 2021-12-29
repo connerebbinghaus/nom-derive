@@ -12,6 +12,7 @@ pub struct Config {
     pub object_endianness: ParserEndianness,
     /// Complete option for this struct (default: streaming)
     pub complete: bool,
+    #[cfg(feature = "std")]
     pub debug: bool,
     pub debug_derive: bool,
     pub generic_errors: bool,
@@ -28,6 +29,7 @@ impl Config {
         let mut req_big_endian = false;
         let mut req_little_endian = false;
         let mut complete = false;
+        #[cfg(feature = "std")]
         let mut debug = false;
         let mut debug_derive = false;
         let mut generic_errors = false;
@@ -40,7 +42,12 @@ impl Config {
                 }
                 MetaAttrType::LittleEndian => req_little_endian = true,
                 MetaAttrType::Complete => complete = true,
+                #[cfg(feature = "std")]
                 MetaAttrType::Debug => debug = true,
+                #[cfg(not(feature = "std"))]
+                MetaAttrType::Debug => {
+                    return Err(Error::new(meta.span(), "Nom-derive: Debug requires std feature"));
+                }
                 MetaAttrType::DebugDerive => debug_derive = true,
                 MetaAttrType::GenericErrors => generic_errors = true,
                 _ => (),
@@ -86,6 +93,7 @@ impl Config {
             global_endianness: ParserEndianness::Unspecified,
             object_endianness,
             complete,
+            #[cfg(feature = "std")]
             debug,
             debug_derive,
             generic_errors,

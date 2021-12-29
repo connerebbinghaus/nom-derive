@@ -3,7 +3,9 @@ use crate::endian::*;
 use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::*;
-use proc_macro2::{Span, TokenStream, TokenTree};
+use proc_macro2::{TokenStream, TokenTree};
+#[cfg(feature = "std")]
+use proc_macro2::Span;
 use quote::ToTokens;
 use syn::spanned::Spanned;
 use syn::*;
@@ -45,6 +47,12 @@ fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Result
     if ident == "PhantomData" {
         return Ok(ParserExpr::PhantomData);
     }
+    // catch unsupported types when alloc is disabled
+    #[cfg(not(feature = "alloc"))]
+    if ident == "Vec" || ident == "String" {
+        return Err(Error::new(ty.span(), "Nom-derive: parsing this type requires the alloc feature"));
+    }
+
     let endian = get_local_endianness(ty.span(), meta_list, config)?;
     match endian {
         ParserEndianness::BigEndian => Ok(ParserExpr::CallParseBE(TypeItem(ty.clone()))),
@@ -180,6 +188,7 @@ fn get_parser(
                 let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;
                 return Ok(expr.complete());
             }
+            #[cfg(feature = "std")]
             MetaAttrType::Debug => {
                 let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;
                 let ident = match ident {
@@ -193,6 +202,10 @@ fn get_parser(
                 };
                 return Ok(ParserExpr::DbgDmp(Box::new(expr), ident.clone()));
             }
+            #[cfg(not(feature = "std"))]
+            MetaAttrType::Debug => {
+                return Err(Error::new(meta.span(), "Nom-derive: Debug requires std feature"));
+            },
             MetaAttrType::Cond => {
                 // try to infer subparser
                 // check type is Option<T>, and extract T
@@ -202,6 +215,7 @@ fn get_parser(
                 let ts = meta.arg().unwrap();
                 return Ok(ParserExpr::Cond(Box::new(expr), ts.clone()));
             }
+            #[cfg(feature = "alloc")]
             MetaAttrType::Count => {
                 // try to infer subparser
                 // check type is Vec<T>, and extract T
@@ -211,10 +225,15 @@ fn get_parser(
                 let ts = meta.arg().unwrap();
                 return Ok(ParserExpr::Count(Box::new(expr), ts.clone()));
             }
+            #[cfg(not(feature = "alloc"))]
+            MetaAttrType::Count => {
+                return Err(Error::new(meta.span(), "Nom-derive: Count requires alloc feature"));
+            },
             MetaAttrType::Into => {
                 let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;
                 return Ok(ParserExpr::Into(Box::new(expr)));
             }
+            #[cfg(feature = "alloc")]
             MetaAttrType::LengthCount => {
                 // try to infer subparser
                 // check type is Vec<T>, and extract T
@@ -224,6 +243,10 @@ fn get_parser(
                 let ts = meta.arg().unwrap();
                 return Ok(ParserExpr::LengthCount(Box::new(expr), ts.clone()));
             }
+            #[cfg(not(feature = "alloc"))]
+            MetaAttrType::LengthCount => {
+                return Err(Error::new(meta.span(), "Nom-derive: LengthCount requires alloc feature"));
+            },
             MetaAttrType::Map => {
                 let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;
                 // if meta.arg is string, parse content
@@ -457,6 +480,7 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> Result<StructPars
             p = p.complete();
         }
 
+        #[cfg(feature = "std")]
         if config.debug {
             // debug is set for entire struct
             let ident = match &field.ident {
